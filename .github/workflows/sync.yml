@@ -8,8 +8,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # 必须加上下面这三行权限，否则无法创建 Release
     permissions:
       contents: write
+      packages: write
       
     steps:
       - name: Pull Image

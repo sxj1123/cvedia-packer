@@ -8,25 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # 必须加上下面这三行权限，否则无法创建 Release
     permissions:
       contents: write
-      packages: write
       
     steps:
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo docker image prune -a -f
+
+      - name: Login to Docker Hub (CVEDIA Auth)
+        # 使用你刚才设置的 Secrets 进行登录
+        run: echo "${{ secrets.CVEDIA_PASSWORD }}" | docker login -u "${{ secrets.CVEDIA_USERNAME }}" --password-stdin
+
       - name: Pull Image
+        # 登录后，这里就不会报 403 Denied 错误了
         run: docker pull cvedia/rt:latest-nvidia
 
-      - name: Save Image to Tar
-        run: docker save cvedia/rt:latest-nvidia -o cvedia_rt_nvidia.tar
-
-      - name: Compress Image
-        run: gzip cvedia_rt_nvidia.tar
+      - name: Save and Compress
+        run: |
+          docker save cvedia/rt:latest-nvidia | gzip > cvedia_rt_nvidia.tar.gz
 
       - name: Create Release and Upload
         uses: softprops/action-gh-release@v1
         with:
           files: cvedia_rt_nvidia.tar.gz
-          tag_name: v1.0.${{ github.run_number }}
+          tag_name: v3.0.${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

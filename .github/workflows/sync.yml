@@ -1,0 +1,30 @@
+name: Package Docker Image to File
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Pull Image
+        run: docker pull cvedia/rt:latest-nvidia
+
+      - name: Save Image to Tar
+        run: docker save cvedia/rt:latest-nvidia -o cvedia_rt_nvidia.tar
+
+      - name: Compress Image
+        run: gzip cvedia_rt_nvidia.tar
+
+      - name: Create Release and Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          files: cvedia_rt_nvidia.tar.gz
+          tag_name: v1.0.${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
